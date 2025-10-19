@@ -14,7 +14,7 @@ namespace YetAnotherAnkiTool.Core
 {
     public partial class SettingsForm : Form
     {
-        private static Panel scrollContainer = null;
+        private static Panel scrollContainer = null!;
 
         public SettingsForm()
         {

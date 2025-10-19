@@ -66,7 +66,7 @@ namespace YetAnotherAnkiTool.Core.Config
             public string AnkiAddress { get; set; } = "127.0.0.1";
             public float AnkiAudioOutputGain { get; set; } = 1.0f;
             public int AnkiImgWidthOverride { get; set; } = 0;
-            public int AnkiImgHeightOverride { get; set; } = 400;
+            public int AnkiImgHeightOverride { get; set; } = 0;
         }
     }
 }

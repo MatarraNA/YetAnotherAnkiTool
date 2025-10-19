@@ -212,7 +212,7 @@ namespace YetAnotherAnkiTool.Core.API
                         StopAudio();
                         break;
                     }
-                    Thread.Sleep(50); // adjust for responsiveness
+                    Thread.Sleep(10); // adjust for responsiveness
                 }
             });
         }

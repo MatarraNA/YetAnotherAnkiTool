@@ -13,6 +13,8 @@ using YetAnotherAnkiTool.Core.Config;
 using YetAnotherAnkiTool.Core.Control;
 using YetAnotherAnkiTool.Core.JSON;
 
+// PUBLISH COMMAND
+// dotnet publish -c Release -r win-x64 --self-contained false
 namespace YetAnotherAnkiTool
 {
     public partial class MainForm : Form
@@ -170,7 +172,7 @@ namespace YetAnotherAnkiTool
             _ankiPollTimer.Interval = 500;
             _ankiPollTimer.Tick += _ankiPollTimer_Tick;
             _ankiPollTimer.Start();
-            _ankiPollTimer_Tick(null, null);
+            _ankiPollTimer_Tick(null, null!);
         }
         private void InitializeScreenshotRecording()
         {
@@ -178,7 +180,7 @@ namespace YetAnotherAnkiTool
             _screenshotTimer.Interval = 1000;
             _screenshotTimer.Tick += _screenshotTimer_Tick;
             _screenshotTimer.Start();
-            _screenshotTimer_Tick(null, null);
+            _screenshotTimer_Tick(null, null!);
         }
 
         private void UpdatePlaybackUI()
@@ -281,7 +283,14 @@ namespace YetAnotherAnkiTool
                     ankiNoteIdLabel.Invalidate();
                     return;
                 }
-                else if( noteId == 0 ) // this id is found, if getnotes returns an empty array. So it is connected, but no notes were made yet
+                else if( !Directory.Exists(Config.Configuration.AnkiMediaFolderPath) )
+                {
+                    // update label to inform user that MEDIA PATH is INVALID
+                    ankiNoteIdLabel.Text = "Anki Media folder path is invalid...";
+                    ankiNoteIdLabel.Invalidate();
+                    return;
+                }
+                else if (noteId == 0) // this id is found, if getnotes returns an empty array. So it is connected, but no notes were made yet
                 {
                     ankiNoteIdLabel.Text = "Anki Connected!";
                     ankiNoteIdLabel.Invalidate();
@@ -406,7 +415,7 @@ namespace YetAnotherAnkiTool
                     Cursor = Cursors.Hand
                 };
 
-                pic.Click += Image_Click;
+                pic.Click += Image_Click!;
                 pic.DoubleClick += Pic_DoubleClick;
                 imageFlowPanel.Controls.Add(pic);
             }
