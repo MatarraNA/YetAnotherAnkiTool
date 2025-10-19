@@ -8,7 +8,7 @@ namespace YetAnotherAnkiTool.Core.API
     public class ScreenshotAPI
     {
         public static string OUTPUT_PATH => Path.Combine(Environment.CurrentDirectory, "ScreenshotOut");
-        private static int NUM_SS_TO_KEEP = 30;
+        private static readonly int NUM_SS_TO_KEEP = 30;
 
         [DllImport("user32.dll")]
         private static extern IntPtr GetForegroundWindow();
@@ -45,24 +45,8 @@ namespace YetAnotherAnkiTool.Core.API
             using var gfx = Graphics.FromImage(bmp);
             gfx.CopyFromScreen(rect.Left, rect.Top, 0, 0, new Size(width, height), CopyPixelOperation.SourceCopy);
 
-            // Apply size override if configured
-            int overrideWidth = Config.Config.Configuration.AnkiImgWidthOverride;
-            int overrideHeight = Config.Config.Configuration.AnkiImgHeightOverride;
-
-            Bitmap finalImage = bmp;
-            if (overrideWidth > 0 && overrideHeight > 0)
-            {
-                finalImage = new Bitmap(overrideWidth, overrideHeight);
-                using var resizeGfx = Graphics.FromImage(finalImage);
-                resizeGfx.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                resizeGfx.DrawImage(bmp, 0, 0, overrideWidth, overrideHeight);
-            }
-
             string filePath = Path.Combine(OUTPUT_PATH, $"screenshot_{DateTime.Now.Ticks}.jpg");
-            finalImage.Save(filePath, ImageFormat.Jpeg);
-
-            if (finalImage != bmp)
-                finalImage.Dispose(); // cleanup resized image
+            bmp.Save(filePath, ImageFormat.Jpeg);
 
             // Cleanup: keep only the newest NUM_SS_TO_KEEP
             var files = Directory.GetFiles(OUTPUT_PATH, "screenshot_*.jpg")

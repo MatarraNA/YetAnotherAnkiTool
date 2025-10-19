@@ -2,6 +2,7 @@
 using CSCore.Codecs.WAV;
 using CSCore.SoundOut;
 using System;
+using System.Drawing.Imaging;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
@@ -394,7 +395,7 @@ namespace YetAnotherAnkiTool
 
             foreach (var file in files.Reverse()) // newest on right
             {
-                var pic = new PictureBox
+                var pic = new PictureBox 
                 {
                     Image = LoadImageUnlocked(file),
                     SizeMode = PictureBoxSizeMode.Zoom,
@@ -406,10 +407,57 @@ namespace YetAnotherAnkiTool
                 };
 
                 pic.Click += Image_Click;
+                pic.DoubleClick += Pic_DoubleClick;
                 imageFlowPanel.Controls.Add(pic);
             }
 
             imageFlowPanel.AutoScrollPosition = new Point(imageFlowPanel.HorizontalScroll.Maximum, 0);
+        }
+
+        private void Pic_DoubleClick(object? sender, EventArgs e)
+        {
+            if (sender is PictureBox pic && pic.Tag is string filePath && File.Exists(filePath))
+            {
+                using var image = LoadImageUnlocked(filePath);
+                var screen = Screen.FromControl(this).WorkingArea;
+
+                // Calculate max allowed size (80% of screen)
+                int maxWidth = (int)(screen.Width * 0.8);
+                int maxHeight = (int)(screen.Height * 0.8);
+
+                // Scale image down if needed
+                int imgWidth = image.Width;
+                int imgHeight = image.Height;
+
+                double scale = Math.Min(1.0, Math.Min((double)maxWidth / imgWidth, (double)maxHeight / imgHeight));
+                int finalWidth = (int)(imgWidth * scale);
+                int finalHeight = (int)(imgHeight * scale);
+
+                var fullSizeForm = new Form
+                {
+                    Text = Path.GetFileName(filePath),
+                    StartPosition = FormStartPosition.CenterParent,
+                    BackColor = Color.Black,
+                    ClientSize = new Size(finalWidth, finalHeight),
+                    FormBorderStyle = FormBorderStyle.FixedDialog,
+                    MaximizeBox = false,
+                    MinimizeBox = false
+                };
+
+                var fullImage = new PictureBox
+                {
+                    Image = new Bitmap(image), // clone to avoid disposal issues
+                    SizeMode = PictureBoxSizeMode.Zoom,
+                    Dock = DockStyle.Fill
+                };
+
+                fullSizeForm.KeyDown += (x, y) => 
+                {
+                    if (y.KeyCode == Keys.Escape) fullSizeForm.Close();
+                };
+                fullSizeForm.Controls.Add(fullImage);
+                fullSizeForm.ShowDialog();
+            }
         }
 
         private void Image_Click(object sender, EventArgs e)
@@ -430,7 +478,7 @@ namespace YetAnotherAnkiTool
                 _selectedPictureBox.BackColor = Color.DodgerBlue; // or any highlight color
             }
 
-            _selectedPicturePath = _selectedPictureBox.Tag as string;
+            _selectedPicturePath = _selectedPictureBox!.Tag as string;
         }
 
         private Image LoadImageUnlocked(string path)
@@ -455,9 +503,25 @@ namespace YetAnotherAnkiTool
             // copy file to media folder, then send to anki
             string screnshotFileName = $"sentToAnki_" + DateTime.Now.Ticks + ".jpg";
             string screenshotAnkiFullPath = Path.Combine(Config.Configuration.AnkiMediaFolderPath, screnshotFileName);
-            File.Copy(_selectedPicturePath, screenshotAnkiFullPath);
+            using var original = Image.FromFile(_selectedPicturePath); // load in original image
+            int overrideWidth = Config.Configuration.AnkiImgWidthOverride;
+            int overrideHeight = Config.Configuration.AnkiImgHeightOverride;
+            Image finalImage = original;
+            if (overrideWidth > 0 && overrideHeight > 0) // if overrides exist, resize it
+            {
+                var resized = new Bitmap(overrideWidth, overrideHeight);
+                using var gfx = Graphics.FromImage(resized);
+                gfx.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                gfx.DrawImage(original, 0, 0, overrideWidth, overrideHeight);
+                finalImage = resized;
+            }
+            finalImage.Save(screenshotAnkiFullPath, ImageFormat.Jpeg);
+            if (!ReferenceEquals(finalImage, original))
+                finalImage.Dispose();
             bool worked = await SetCardPictureAsync(_lastAnkiId, screnshotFileName);
-            if (!worked) MessageBox.Show("Error: Failed to set picture on latest anki card. Check configuration settings.");
+            if (!worked)
+                MessageBox.Show("Error: Failed to set picture on latest anki card. Check configuration settings.");
+
 
             // Sent selected audio to anki
             string soundFileName = $"sentToAnki_" + DateTime.Now.Ticks + ".mp3";

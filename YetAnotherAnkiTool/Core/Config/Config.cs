@@ -67,7 +67,6 @@ namespace YetAnotherAnkiTool.Core.Config
             public float AnkiAudioOutputGain { get; set; } = 1.0f;
             public int AnkiImgWidthOverride { get; set; } = 0;
             public int AnkiImgHeightOverride { get; set; } = 400;
-            public int AnkiImgHeightOverrideT { get; set; } = 200;
         }
     }
 }

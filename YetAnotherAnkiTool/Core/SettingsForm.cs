@@ -14,10 +14,30 @@ namespace YetAnotherAnkiTool.Core
 {
     public partial class SettingsForm : Form
     {
+        private static Panel scrollContainer = null;
+
         public SettingsForm()
         {
             InitializeComponent();
+            WrapConfigPanelInScrollContainer();
             InitializeConfigForm();
+        }
+
+        private void WrapConfigPanelInScrollContainer()
+        {
+            scrollContainer = new Panel
+            {
+                Location = configPanel.Location,
+                Size = configPanel.Size,
+                AutoScroll = true,
+                BackColor = configPanel.BackColor
+            };
+
+            this.Controls.Remove(configPanel);
+            configPanel.Location = new Point(0, 0);
+            scrollContainer.Controls.Add(configPanel);
+            this.Controls.Add(scrollContainer);
+            scrollContainer.BringToFront();
         }
 
         private void InitializeConfigForm()
@@ -44,12 +64,15 @@ namespace YetAnotherAnkiTool.Core
                     Name = $"txt_{prop.Name}",
                     Text = prop.GetValue(config)?.ToString() ?? "",
                     Location = new Point(150, y),
-                    Width = 300
+                    Width = 275
                 };
                 configPanel.Controls.Add(textbox);
 
                 y += 30;
             }
+
+            configPanel.Height = y + 30;
+            configPanel.Width = scrollContainer.ClientSize.Width - 20;
         }
 
         private void cancelBtn_Click(object sender, EventArgs e)
