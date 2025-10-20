@@ -63,8 +63,8 @@ namespace YetAnotherAnkiTool.Core
                 {
                     Name = $"txt_{prop.Name}",
                     Text = prop.GetValue(config)?.ToString() ?? "",
-                    Location = new Point(150, y),
-                    Width = 275
+                    Location = new Point(200, y),
+                    Width = 225
                 };
                 configPanel.Controls.Add(textbox);
 

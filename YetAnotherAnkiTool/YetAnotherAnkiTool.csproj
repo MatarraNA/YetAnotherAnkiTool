@@ -19,12 +19,22 @@
 		<AssemblyVersion>$(Year).$(Month).$(Day).$(MinutesSinceMidnight)</AssemblyVersion>
 		<FileVersion>$(Year).$(Month).$(Day).$(MinutesSinceMidnight)</FileVersion>
 		<Version>$(Year).$(Month).$(Day).$(MinutesSinceMidnight)</Version>
+		<ApplicationIcon>AppIco.ico</ApplicationIcon>
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <Content Include="AppIco.ico" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="CSCore" Version="1.2.1.2" />
 		<PackageReference Include="NAudio.Lame" Version="2.1.0" />
 		<PackageReference Include="ReaLTaiizor" Version="3.8.1.3" />
+		<PackageReference Include="Updatum" Version="1.1.6" />
 	</ItemGroup>
+
+	<Target Name="ZipPublishedApp" AfterTargets="Publish">
+		<Exec Command="powershell -ExecutionPolicy Bypass -File PackRelease.ps1" />
+	</Target>
 
 </Project>

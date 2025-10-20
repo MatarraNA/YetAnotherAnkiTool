@@ -154,19 +154,7 @@ namespace YetAnotherAnkiTool.Core.API
             }
         }
 
-        public static void PlayAudio()
-        {
-            StopAudio();
-
-            var sources = GetAudioSources();
-            if (sources.Count == 0) return;
-            _playbackSource = new ChainedWaveSource(sources);
-            _outputDevice = new WasapiOut();
-            _outputDevice.Initialize(_playbackSource);
-            _outputDevice.Play();
-        }
-
-        public static void PlayAudio(double? startSeconds = null, double? endSeconds = null, float? volume = null)
+        public static void PlayAudio(double? startSeconds = null, double? endSeconds = null, float gain = 1.0f, bool forceMono = true)
         {
             StopAudio();
 
@@ -174,32 +162,40 @@ namespace YetAnotherAnkiTool.Core.API
             if (sources.Count == 0) return;
 
             var fullSource = new ChainedWaveSource(sources);
-            var waveFormat = fullSource.WaveFormat;
-            long totalBytes = fullSource.Length;
-            double totalSeconds = (double)totalBytes / waveFormat.BytesPerSecond;
+            var sampleSource = fullSource.ToSampleSource();
 
-            // Calculate byte offsets
-            long startByte = 0;
-            long endByte = totalBytes;
+            // Apply gain
+            var volumeSource = new VolumeSource(sampleSource) { Volume = gain };
 
-            if (startSeconds.HasValue && startSeconds.Value >= 0 && startSeconds.Value < totalSeconds)
-                startByte = (long)(startSeconds.Value * waveFormat.BytesPerSecond);
+            // Optional mono conversion
+            var monoSource = forceMono ? volumeSource.ToMono() : volumeSource;
 
-            if (endSeconds.HasValue && endSeconds.Value > startSeconds.GetValueOrDefault() && endSeconds.Value <= totalSeconds)
-                endByte = (long)(endSeconds.Value * waveFormat.BytesPerSecond);
+            // Convert to 16-bit PCM
+            var waveSource = monoSource.ToWaveSource(16);
 
-            if (startByte >= totalBytes || endByte <= startByte)
-            {
-                startByte = 0;
-                endByte = totalBytes;
-            }
+            var waveFormat = waveSource.WaveFormat;
+            int bytesPerSecond = waveFormat.BytesPerSecond;
+            int blockAlign = waveFormat.BlockAlign;
 
-            fullSource.Position = startByte;
+            double totalSeconds = (double)waveSource.Length / bytesPerSecond;
+            double start = Math.Max(0, startSeconds.GetValueOrDefault(0));
+            double end = Math.Min(endSeconds.GetValueOrDefault(totalSeconds), totalSeconds);
+            double duration = Math.Max(0, end - start);
 
-            _playbackSource = fullSource;
+            long startBytes = (long)(start * bytesPerSecond);
+            long endBytes = (long)(end * bytesPerSecond);
+
+            // Align to block size
+            startBytes -= startBytes % blockAlign;
+            endBytes -= endBytes % blockAlign;
+
+            // Skip to start
+            waveSource.Position = startBytes;
+
+            _playbackSource = waveSource;
             _outputDevice = new WasapiOut();
             _outputDevice.Initialize(_playbackSource);
-            _outputDevice.Volume = volume != null ? volume.Value : 1.0f;
+            _outputDevice.Volume = 1.0f; // gain is already applied
             _outputDevice.Play();
 
             // Monitor playback and stop at endByte
@@ -207,15 +203,66 @@ namespace YetAnotherAnkiTool.Core.API
             {
                 while (_outputDevice?.PlaybackState == PlaybackState.Playing)
                 {
-                    if (_playbackSource?.Position >= endByte)
+                    if (_playbackSource?.Position >= endBytes)
                     {
                         StopAudio();
                         break;
                     }
-                    Thread.Sleep(10); // adjust for responsiveness
+                    Thread.Sleep(10);
                 }
             });
         }
+
+        //public static void PlayAudio(double? startSeconds = null, double? endSeconds = null, float? volume = null)
+        //{
+        //    StopAudio();
+
+        //    var sources = GetAudioSources();
+        //    if (sources.Count == 0) return;
+
+        //    var fullSource = new ChainedWaveSource(sources);
+        //    var waveFormat = fullSource.WaveFormat;
+        //    long totalBytes = fullSource.Length;
+        //    double totalSeconds = (double)totalBytes / waveFormat.BytesPerSecond;
+
+        //    // Calculate byte offsets
+        //    long startByte = 0;
+        //    long endByte = totalBytes;
+
+        //    if (startSeconds.HasValue && startSeconds.Value >= 0 && startSeconds.Value < totalSeconds)
+        //        startByte = (long)(startSeconds.Value * waveFormat.BytesPerSecond);
+
+        //    if (endSeconds.HasValue && endSeconds.Value > startSeconds.GetValueOrDefault() && endSeconds.Value <= totalSeconds)
+        //        endByte = (long)(endSeconds.Value * waveFormat.BytesPerSecond);
+
+        //    if (startByte >= totalBytes || endByte <= startByte)
+        //    {
+        //        startByte = 0;
+        //        endByte = totalBytes;
+        //    }
+
+        //    fullSource.Position = startByte;
+
+        //    _playbackSource = fullSource;
+        //    _outputDevice = new WasapiOut();
+        //    _outputDevice.Initialize(_playbackSource);
+        //    _outputDevice.Volume = volume != null ? volume.Value : 1.0f;
+        //    _outputDevice.Play();
+
+        //    // Monitor playback and stop at endByte
+        //    Task.Run(() =>
+        //    {
+        //        while (_outputDevice?.PlaybackState == PlaybackState.Playing)
+        //        {
+        //            if (_playbackSource?.Position >= endByte)
+        //            {
+        //                StopAudio();
+        //                break;
+        //            }
+        //            Thread.Sleep(10); // adjust for responsiveness
+        //        }
+        //    });
+        //}
 
         public static void SaveAudioSegmentToFile(string outputPath, double? startSeconds = null, double? endSeconds = null, float gain = 1.0f)
         {

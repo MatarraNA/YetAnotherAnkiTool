@@ -7,14 +7,16 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Windows.Forms;
+using Updatum;
 using YetAnotherAnkiTool.Core;
 using YetAnotherAnkiTool.Core.API;
 using YetAnotherAnkiTool.Core.Config;
 using YetAnotherAnkiTool.Core.Control;
 using YetAnotherAnkiTool.Core.JSON;
 
-// PUBLISH COMMAND
+// Pack steps
 // dotnet publish -c Release -r win-x64 --self-contained false
+// create new github release -> tag it the version name, name it version name, upload zip
 namespace YetAnotherAnkiTool
 {
     public partial class MainForm : Form
@@ -43,6 +45,8 @@ namespace YetAnotherAnkiTool
         private static System.Windows.Forms.Timer? _screenshotTimer;
         private static PictureBox? _selectedPictureBox = null;
         private static string? _selectedPicturePath = null;
+
+        // AUTO UPDATE
 
         public double CurrentStartOffset
         {
@@ -74,8 +78,12 @@ namespace YetAnotherAnkiTool
             InitializeComponent();
         }
 
-        private void mainForm_Enter(object sender, EventArgs e)
+        private async void mainForm_Enter(object sender, EventArgs e)
         {
+            // check for updates before anything else
+            await InitializeAutoUpdate();
+
+            // run initialization code
             InitializeRecording();
             InitializeOverlay();
             InitializeAnkiPolling();
@@ -93,13 +101,13 @@ namespace YetAnotherAnkiTool
             }
 
             StopPlayback(); // ensures clean state
-            StartPlayback(CurrentStartOffset, CurrentEndOffset);
+            StartPlayback(CurrentStartOffset, CurrentEndOffset, Config.Configuration.GUIPlaybackOnlyGain);
         }
 
-        private void StartPlayback(double start, double end, float volume = 1)
+        private void StartPlayback(double start, double end, float gain = 1)
         {
             if (IsPlaying) return;
-            AudioAPI.PlayAudio(start, end, volume);
+            AudioAPI.PlayAudio(start, end, gain);
             playAudioBtn.Text = PAUSE_UNICODE;
             IsPlaying = true;
 
@@ -138,6 +146,51 @@ namespace YetAnotherAnkiTool
             playAudioBtn.Text = PLAY_UNICODE;
         }
 
+
+        private async Task InitializeAutoUpdate()
+        {
+            try
+            {
+                // Check for updates
+                var updateFound = await GithubAPI.AppUpdater.CheckForUpdatesAsync();
+                if (!updateFound) return;
+
+                // Prompt user to confirm update
+                var result = MessageBox.Show(
+                    $"New update available!\n\nCurrent Version: {GithubAPI.AppUpdater.CurrentVersion}\nNew Version: {GithubAPI.AppUpdater.LatestReleaseTagVersionStr}\n\nDo you want to download and install it?",
+                    "Update Available",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Information);
+
+                if (result == DialogResult.No) return;
+
+                // Show progress form
+                using var progressForm = new UpdateProgressForm();
+                progressForm.Show();
+
+                // Download the update
+                var downloadedAsset = await GithubAPI.AppUpdater.DownloadUpdateAsync();
+                Application.DoEvents();
+                await Task.Delay(50);
+
+                // Close progress form
+                progressForm.Close();
+
+                if (downloadedAsset == null)
+                {
+                    MessageBox.Show("Failed to download the update.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                // install it
+                SetCaptureActive(false); // ensure capture is stopped, so file locks are released
+                await GithubAPI.AppUpdater.InstallUpdateAsync(downloadedAsset);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Update failed:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
 
         private void InitializeRecording()
         {
@@ -335,6 +388,18 @@ namespace YetAnotherAnkiTool
 
                 // play audio for 1 frame, just to load it into memory
                 StartPlayback(0, 0.15, 0f);
+
+                // bring this form to front over ALL others in windows
+                if( Config.Configuration.GUI_BringToFront_OnNewCard )
+                {
+                    if (this.WindowState == FormWindowState.Minimized)
+                        this.WindowState = FormWindowState.Normal;
+
+                    this.TopMost = true;       // Temporarily force it on top
+                    this.Activate();           // Give it focus
+                    this.BringToFront();       // Move it above other windows
+                    this.TopMost = false;      // Restore normal behavior
+                }
             }
             catch { }
         }
@@ -382,6 +447,17 @@ namespace YetAnotherAnkiTool
         private void menuMinimizeBtn_Click(object sender, EventArgs e)
         {
             this.WindowState = FormWindowState.Minimized;
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            base.OnFormClosing(e);
+
+            // Stop background tasks
+            SetCaptureActive(false);
+
+            // forceshut down
+            Environment.Exit(0);
         }
 
         private void ClearScreenshotPanel()

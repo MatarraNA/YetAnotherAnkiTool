@@ -28,8 +28,9 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             audioSeekTrackBar = new ReaLTaiizor.Controls.TrackBar();
-            dreamForm1 = new ReaLTaiizor.Forms.DreamForm();
+            YetAnotherAnkiTool = new ReaLTaiizor.Forms.DreamForm();
             imageFlowPanel = new FlowLayoutPanel();
             menuMinimizeBtn = new ReaLTaiizor.Controls.DreamButton();
             menuCloseBtn = new ReaLTaiizor.Controls.DreamButton();
@@ -45,7 +46,7 @@
             endOffsetTxtBox = new ReaLTaiizor.Controls.DreamTextBox();
             startOffsetTxtBox = new ReaLTaiizor.Controls.DreamTextBox();
             playAudioBtn = new ReaLTaiizor.Controls.DreamButton();
-            dreamForm1.SuspendLayout();
+            YetAnotherAnkiTool.SuspendLayout();
             groupBox1.SuspendLayout();
             SuspendLayout();
             // 
@@ -68,38 +69,38 @@
             audioSeekTrackBar.MouseMove += audioSeekTrackBar_MouseMove;
             audioSeekTrackBar.MouseUp += audioSeekTrackBar_MouseUp;
             // 
-            // dreamForm1
+            // YetAnotherAnkiTool
             // 
-            dreamForm1.ColorA = Color.FromArgb(40, 218, 255);
-            dreamForm1.ColorB = Color.FromArgb(63, 63, 63);
-            dreamForm1.ColorC = Color.FromArgb(41, 41, 41);
-            dreamForm1.ColorD = Color.FromArgb(27, 27, 27);
-            dreamForm1.ColorE = Color.FromArgb(0, 0, 0, 0);
-            dreamForm1.ColorF = Color.FromArgb(25, 255, 255, 255);
-            dreamForm1.Controls.Add(imageFlowPanel);
-            dreamForm1.Controls.Add(menuMinimizeBtn);
-            dreamForm1.Controls.Add(menuCloseBtn);
-            dreamForm1.Controls.Add(sendToAnkiBtn);
-            dreamForm1.Controls.Add(settingsBtn);
-            dreamForm1.Controls.Add(groupBox1);
-            dreamForm1.Controls.Add(statusLabel);
-            dreamForm1.Controls.Add(trackPosLabel);
-            dreamForm1.Controls.Add(foxLabel2);
-            dreamForm1.Controls.Add(foxLabel1);
-            dreamForm1.Controls.Add(endOffsetTxtBox);
-            dreamForm1.Controls.Add(startOffsetTxtBox);
-            dreamForm1.Controls.Add(playAudioBtn);
-            dreamForm1.Controls.Add(audioSeekTrackBar);
-            dreamForm1.Dock = DockStyle.Fill;
-            dreamForm1.Location = new Point(0, 0);
-            dreamForm1.Name = "dreamForm1";
-            dreamForm1.Size = new Size(704, 441);
-            dreamForm1.TabIndex = 1;
-            dreamForm1.TabStop = false;
-            dreamForm1.Text = "Yet Another Anki Tool";
-            dreamForm1.TitleAlign = HorizontalAlignment.Center;
-            dreamForm1.TitleHeight = 25;
-            dreamForm1.Enter += mainForm_Enter;
+            YetAnotherAnkiTool.ColorA = Color.FromArgb(40, 218, 255);
+            YetAnotherAnkiTool.ColorB = Color.FromArgb(63, 63, 63);
+            YetAnotherAnkiTool.ColorC = Color.FromArgb(41, 41, 41);
+            YetAnotherAnkiTool.ColorD = Color.FromArgb(27, 27, 27);
+            YetAnotherAnkiTool.ColorE = Color.FromArgb(0, 0, 0, 0);
+            YetAnotherAnkiTool.ColorF = Color.FromArgb(25, 255, 255, 255);
+            YetAnotherAnkiTool.Controls.Add(imageFlowPanel);
+            YetAnotherAnkiTool.Controls.Add(menuMinimizeBtn);
+            YetAnotherAnkiTool.Controls.Add(menuCloseBtn);
+            YetAnotherAnkiTool.Controls.Add(sendToAnkiBtn);
+            YetAnotherAnkiTool.Controls.Add(settingsBtn);
+            YetAnotherAnkiTool.Controls.Add(groupBox1);
+            YetAnotherAnkiTool.Controls.Add(statusLabel);
+            YetAnotherAnkiTool.Controls.Add(trackPosLabel);
+            YetAnotherAnkiTool.Controls.Add(foxLabel2);
+            YetAnotherAnkiTool.Controls.Add(foxLabel1);
+            YetAnotherAnkiTool.Controls.Add(endOffsetTxtBox);
+            YetAnotherAnkiTool.Controls.Add(startOffsetTxtBox);
+            YetAnotherAnkiTool.Controls.Add(playAudioBtn);
+            YetAnotherAnkiTool.Controls.Add(audioSeekTrackBar);
+            YetAnotherAnkiTool.Dock = DockStyle.Fill;
+            YetAnotherAnkiTool.Location = new Point(0, 0);
+            YetAnotherAnkiTool.Name = "YetAnotherAnkiTool";
+            YetAnotherAnkiTool.Size = new Size(704, 441);
+            YetAnotherAnkiTool.TabIndex = 1;
+            YetAnotherAnkiTool.TabStop = false;
+            YetAnotherAnkiTool.Text = "Yet Another Anki Tool";
+            YetAnotherAnkiTool.TitleAlign = HorizontalAlignment.Center;
+            YetAnotherAnkiTool.TitleHeight = 25;
+            YetAnotherAnkiTool.Enter += mainForm_Enter;
             // 
             // imageFlowPanel
             // 
@@ -317,17 +318,18 @@
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(704, 441);
-            Controls.Add(dreamForm1);
+            Controls.Add(YetAnotherAnkiTool);
             FormBorderStyle = FormBorderStyle.None;
+            Icon = (Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
             MaximumSize = new Size(2560, 1392);
             MinimumSize = new Size(261, 65);
             Name = "MainForm";
             StartPosition = FormStartPosition.CenterScreen;
-            Text = "dungeonForm1";
+            Text = "YetAnotherAnkiTool";
             TransparencyKey = Color.Fuchsia;
-            dreamForm1.ResumeLayout(false);
-            dreamForm1.PerformLayout();
+            YetAnotherAnkiTool.ResumeLayout(false);
+            YetAnotherAnkiTool.PerformLayout();
             groupBox1.ResumeLayout(false);
             ResumeLayout(false);
         }
@@ -335,7 +337,7 @@
         #endregion
 
         private ReaLTaiizor.Controls.TrackBar audioSeekTrackBar;
-        private ReaLTaiizor.Forms.DreamForm dreamForm1;
+        private ReaLTaiizor.Forms.DreamForm YetAnotherAnkiTool;
         private ReaLTaiizor.Controls.DreamButton playAudioBtn;
         private ReaLTaiizor.Controls.DreamTextBox startOffsetTxtBox;
         private ReaLTaiizor.Controls.FoxLabel foxLabel2;

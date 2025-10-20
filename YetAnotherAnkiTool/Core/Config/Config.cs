@@ -9,7 +9,7 @@ namespace YetAnotherAnkiTool.Core.Config
 {
     public static class Config
     {
-        private static string CONFIG_PATH => Path.Combine(Environment.CurrentDirectory, "Settings.json");
+        private static string CONFIG_PATH => Path.Combine(Environment.CurrentDirectory, "Settings.txt");
         private static JsonConfig? _config = null;
         public static JsonConfig Configuration
         {
@@ -67,6 +67,8 @@ namespace YetAnotherAnkiTool.Core.Config
             public float AnkiAudioOutputGain { get; set; } = 1.0f;
             public int AnkiImgWidthOverride { get; set; } = 0;
             public int AnkiImgHeightOverride { get; set; } = 0;
+            public float GUIPlaybackOnlyGain { get; set; } = 1.0f;
+            public bool GUI_BringToFront_OnNewCard { get; set; } = true;
         }
     }
 }
