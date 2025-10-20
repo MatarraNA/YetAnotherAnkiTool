@@ -5,11 +5,11 @@ YetAnotherAnkiTool is a simple utility that allows you to quickly add Images and
 ![alt text](https://i.imgur.com/tJWMcfy.png/ "YetAnotherAnkiTool")
 
 When a card is detected, it will pause capturing and show up under "Latest Anki Card". It will allow you to select the screenshot you'd like to use, as well as the start + end offset for the recorded audio you'd like to save. 
+
 ![alt text](https://i.imgur.com/5R5SXBh.png  "YetAnotherAnkiTool")
 
 You can double click an image here to enlarge it, and left clicking on the slider sets the "Start Offset", with right click setting the "End Offset".
 
 # Tutorial
-
- Youtube Link:
- ![alt text](https://i.imgur.com/5R5SXBh.png  "YetAnotherAnkiTool")
+Click the image below to view a usage example and setup tutorial
+ [![Watch the video](https://img.youtube.com/vi/0lcyYOxbSQk/maxresdefault.jpg)](https://www.youtube.com/watch?v=0lcyYOxbSQk)
