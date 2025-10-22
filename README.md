@@ -12,4 +12,4 @@ You can double click an image here to enlarge it, and left clicking on the slide
 
 # Tutorial
 Click the image below to view a usage example and setup tutorial
- [![Watch the video](https://img.youtube.com/vi/0lcyYOxbSQk/maxresdefault.jpg)](https://www.youtube.com/watch?v=l46LW6V0u7E)
+ [![Watch the video](https://img.youtube.com/vi/l46LW6V0u7E/maxresdefault.jpg)](https://www.youtube.com/watch?v=l46LW6V0u7E)
