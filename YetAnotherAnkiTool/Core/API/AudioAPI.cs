@@ -46,12 +46,7 @@ namespace YetAnotherAnkiTool.Core.API
 
             // Resume from last file index
             var lastFile = Directory.GetFiles(OutputDirectory, "audio_*.wav")
-            .OrderBy(f =>
-            {
-                var name = Path.GetFileNameWithoutExtension(f);
-                var digits = new string(name.Where(char.IsDigit).ToArray());
-                return int.TryParse(digits, out int num) ? num : 0;
-            })
+            .OrderBy(f => ExtractIndex(f))
             .LastOrDefault();
 
 
@@ -71,17 +66,21 @@ namespace YetAnotherAnkiTool.Core.API
 
         private static void DeleteCorruptedFiles()
         {
+            var current = CurrentFilePath;
+
             // check for corrupted files
             var files = Directory.GetFiles(OutputDirectory, "audio_*.wav")
-                     .OrderBy(f => f)
+                     .OrderBy(f => ExtractIndex(f))
                      .ToList();
 
             foreach (var file in files)
             {
                 try
                 {
+                    if (file == current) continue; // never delete the active file
+
                     var fileInfo = new FileInfo(file);
-                    if (fileInfo.Length < 10_240)
+                    if (fileInfo.Length < 10_240 && file != CurrentFilePath)
                         throw new InvalidDataException("File is too small (<10KB).");
 
                     using var reader = new WaveFileReader(file);
@@ -141,10 +140,17 @@ namespace YetAnotherAnkiTool.Core.API
             }
         }
 
+        private static int ExtractIndex(string file)
+        {
+            var name = Path.GetFileNameWithoutExtension(file);
+            var digits = new string(name.Where(char.IsDigit).ToArray());
+            return int.TryParse(digits, out int num) ? num : -1;
+        }
+
         private static void EnforceMaxFileLimit()
         {
             var files = Directory.GetFiles(OutputDirectory, "audio_*.wav")
-                                 .OrderBy(f => f)
+                                 .OrderBy(f => ExtractIndex(f))
                                  .ToList();
 
             while (files.Count > _maxFiles)
@@ -212,58 +218,6 @@ namespace YetAnotherAnkiTool.Core.API
                 }
             });
         }
-
-        //public static void PlayAudio(double? startSeconds = null, double? endSeconds = null, float? volume = null)
-        //{
-        //    StopAudio();
-
-        //    var sources = GetAudioSources();
-        //    if (sources.Count == 0) return;
-
-        //    var fullSource = new ChainedWaveSource(sources);
-        //    var waveFormat = fullSource.WaveFormat;
-        //    long totalBytes = fullSource.Length;
-        //    double totalSeconds = (double)totalBytes / waveFormat.BytesPerSecond;
-
-        //    // Calculate byte offsets
-        //    long startByte = 0;
-        //    long endByte = totalBytes;
-
-        //    if (startSeconds.HasValue && startSeconds.Value >= 0 && startSeconds.Value < totalSeconds)
-        //        startByte = (long)(startSeconds.Value * waveFormat.BytesPerSecond);
-
-        //    if (endSeconds.HasValue && endSeconds.Value > startSeconds.GetValueOrDefault() && endSeconds.Value <= totalSeconds)
-        //        endByte = (long)(endSeconds.Value * waveFormat.BytesPerSecond);
-
-        //    if (startByte >= totalBytes || endByte <= startByte)
-        //    {
-        //        startByte = 0;
-        //        endByte = totalBytes;
-        //    }
-
-        //    fullSource.Position = startByte;
-
-        //    _playbackSource = fullSource;
-        //    _outputDevice = new WasapiOut();
-        //    _outputDevice.Initialize(_playbackSource);
-        //    _outputDevice.Volume = volume != null ? volume.Value : 1.0f;
-        //    _outputDevice.Play();
-
-        //    // Monitor playback and stop at endByte
-        //    Task.Run(() =>
-        //    {
-        //        while (_outputDevice?.PlaybackState == PlaybackState.Playing)
-        //        {
-        //            if (_playbackSource?.Position >= endByte)
-        //            {
-        //                StopAudio();
-        //                break;
-        //            }
-        //            Thread.Sleep(10); // adjust for responsiveness
-        //        }
-        //    });
-        //}
-
         public static void SaveAudioSegmentToFile(string outputPath, double? startSeconds = null, double? endSeconds = null, float gain = 1.0f)
         {
             var sources = GetAudioSources();
@@ -329,65 +283,6 @@ namespace YetAnotherAnkiTool.Core.API
             return new NAudio.Wave.WaveFormat(format.SampleRate, format.BitsPerSample, format.Channels);
         }
 
-
-        //public static void SaveAudioSegmentToFile(string outputPath, double? startSeconds = null, double? endSeconds = null, float gain = 1.0f)
-        //{
-        //    var sources = GetAudioSources();
-        //    if (sources.Count == 0) return;
-
-        //    var fullSource = new ChainedWaveSource(sources);
-        //    fullSource.Position = 0;
-
-        //    var waveFormat = fullSource.WaveFormat;
-        //    long totalBytes = fullSource.Length;
-        //    double totalSeconds = (double)totalBytes / waveFormat.BytesPerSecond;
-
-        //    long startByte = 0;
-        //    long endByte = totalBytes;
-
-        //    if (startSeconds.HasValue && startSeconds.Value >= 0 && startSeconds.Value < totalSeconds)
-        //        startByte = (long)(startSeconds.Value * waveFormat.BytesPerSecond);
-
-        //    if (endSeconds.HasValue && endSeconds.Value > startSeconds.GetValueOrDefault() && endSeconds.Value <= totalSeconds)
-        //        endByte = (long)(endSeconds.Value * waveFormat.BytesPerSecond);
-
-        //    if (startByte >= totalBytes || endByte <= startByte)
-        //    {
-        //        startByte = 0;
-        //        endByte = totalBytes;
-        //    }
-
-        //    fullSource.Position = startByte;
-        //    long bytesToWrite = endByte - startByte;
-
-        //    // Wrap in VolumeSource
-        //    var sampleSource = fullSource.ToSampleSource();
-        //    var volumeSource = new VolumeSource(sampleSource) { Volume = gain };
-        //    var waveSource = volumeSource.ToWaveSource();
-
-        //    using var fs = new FileStream(outputPath, FileMode.Create, FileAccess.Write);
-        //    using var writer = new WaveWriter(fs, waveSource.WaveFormat);
-
-        //    var buffer = new byte[waveSource.WaveFormat.BytesPerSecond];
-        //    long actualBytesWritten = 0;
-
-        //    while (bytesToWrite > 0)
-        //    {
-        //        int toRead = (int)Math.Min(buffer.Length, bytesToWrite);
-        //        toRead -= toRead % waveSource.WaveFormat.BlockAlign;
-        //        if (toRead <= 0) break;
-
-        //        int read = waveSource.Read(buffer, 0, toRead);
-        //        if (read <= 0) break;
-
-        //        writer.Write(buffer, 0, read);
-        //        actualBytesWritten += read;
-        //        bytesToWrite -= read;
-        //    }
-
-        //    writer.Dispose();
-        //}
-
         public static void StopAudio()
         {
             // Stop and dispose any previous playback
@@ -411,12 +306,7 @@ namespace YetAnotherAnkiTool.Core.API
         {
             DeleteCorruptedFiles(); // first delete corrupteds before gathering audio
             return Directory.GetFiles(OutputDirectory, "audio_*.wav")
-                            .OrderBy(f =>
-                            {
-                                var name = Path.GetFileNameWithoutExtension(f);
-                                var digits = new string(name.Where(char.IsDigit).ToArray());
-                                return int.TryParse(digits, out int num) ? num : 0;
-                            })
+                            .OrderBy(f => ExtractIndex(f))
                             .Select(file =>
                             {
                                 var bytes = File.ReadAllBytes(file);
